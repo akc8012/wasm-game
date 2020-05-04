@@ -1,4 +1,6 @@
-# Paint Example
+# Wasm Paint
+
+Copy of wasm-bindgen example.
 
 [View documentation for this example online][dox] or [View compiled example
 online][compiled]
@@ -9,7 +11,7 @@ online][compiled]
 You can build the example locally with:
 
 ```
-$ npm run serve
+$ ./build.sh
 ```
 
-and then visiting http://localhost:8080 in a browser should run the example!
+and then visiting http://localhost:8000 in a browser should run the example!
