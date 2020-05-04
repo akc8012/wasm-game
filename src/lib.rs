@@ -22,37 +22,49 @@ pub fn start() -> Result<(), JsValue> {
 	{
 		let context = context.clone();
 		let pressed = pressed.clone();
-		let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+		let closure = Closure::wrap(Box::new(move |event: web_sys::TouchEvent| {
 			context.begin_path();
-			context.move_to(event.offset_x() as f64, event.offset_y() as f64);
+			context.move_to(
+				event.touches().get(0).unwrap().client_x() as f64,
+				event.touches().get(0).unwrap().client_y() as f64,
+			);
 			pressed.set(true);
 		}) as Box<dyn FnMut(_)>);
-		canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
+		canvas.add_event_listener_with_callback("touchstart", closure.as_ref().unchecked_ref())?;
 		closure.forget();
 	}
 	{
 		let context = context.clone();
 		let pressed = pressed.clone();
-		let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+		let closure = Closure::wrap(Box::new(move |event: web_sys::TouchEvent| {
 			if pressed.get() {
-				context.line_to(event.offset_x() as f64, event.offset_y() as f64);
+				context.line_to(
+					event.touches().get(0).unwrap().client_x() as f64,
+					event.touches().get(0).unwrap().client_y() as f64,
+				);
 				context.stroke();
 				context.begin_path();
-				context.move_to(event.offset_x() as f64, event.offset_y() as f64);
+				context.move_to(
+					event.touches().get(0).unwrap().client_x() as f64,
+					event.touches().get(0).unwrap().client_y() as f64,
+				);
 			}
 		}) as Box<dyn FnMut(_)>);
-		canvas.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
+		canvas.add_event_listener_with_callback("touchmove", closure.as_ref().unchecked_ref())?;
 		closure.forget();
 	}
 	{
 		let context = context.clone();
 		let pressed = pressed.clone();
-		let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+		let closure = Closure::wrap(Box::new(move |event: web_sys::TouchEvent| {
 			pressed.set(false);
-			context.line_to(event.offset_x() as f64, event.offset_y() as f64);
+			context.line_to(
+				event.touches().get(0).unwrap().client_x() as f64,
+				event.touches().get(0).unwrap().client_y() as f64,
+			);
 			context.stroke();
 		}) as Box<dyn FnMut(_)>);
-		canvas.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
+		canvas.add_event_listener_with_callback("touchend", closure.as_ref().unchecked_ref())?;
 		closure.forget();
 	}
 

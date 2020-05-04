@@ -22,6 +22,9 @@ features = [
   'HtmlCanvasElement',
   'HtmlElement',
   'MouseEvent',
+  'TouchEvent',
+  'TouchList',
+  'Touch',
   'Node',
   'Window',
 ]
