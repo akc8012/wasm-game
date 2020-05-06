@@ -12,9 +12,17 @@ pub fn start() -> Result<(), JsValue> {
 	let context = Rc::new(create_context(&canvas)?);
 	let pressed = Rc::new(Cell::new(false));
 
-	mouse_down(context.clone(), &canvas, pressed.clone())?;
-	mouse_move(context.clone(), &canvas, pressed.clone())?;
-	mouse_up(context.clone(), &canvas, pressed.clone())?;
+	let mouse_down = mouse_down(context.clone(), pressed.clone());
+	let mouse_move = mouse_move(context.clone(), pressed.clone());
+	let mouse_up = mouse_up(context.clone(), pressed.clone());
+
+	canvas.add_event_listener_with_callback("mousedown", mouse_down.as_ref().unchecked_ref())?;
+	canvas.add_event_listener_with_callback("mousemove", mouse_move.as_ref().unchecked_ref())?;
+	canvas.add_event_listener_with_callback("mouseup", mouse_up.as_ref().unchecked_ref())?;
+
+	mouse_down.forget();
+	mouse_move.forget();
+	mouse_up.forget();
 
 	Ok(())
 }
@@ -36,44 +44,29 @@ fn create_context(canvas: &Canvas) -> Result<Context, JsValue> {
 	Ok(context)
 }
 
-fn mouse_down(context: Rc<Context>, canvas: &Canvas, pressed: Rc<Cell<bool>>) -> Result<(), JsValue> {
-	let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+fn mouse_down(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		context.begin_path();
 		context.move_to(event.offset_x() as f64, event.offset_y() as f64);
 		pressed.set(true);
-	}) as Box<dyn FnMut(_)>);
-
-	canvas.add_event_listener_with_callback("mousedown", closure.as_ref().unchecked_ref())?;
-	closure.forget();
-
-	Ok(())
+	}) as Box<dyn FnMut(_)>)
 }
 
-fn mouse_move(context: Rc<Context>, canvas: &Canvas, pressed: Rc<Cell<bool>>) -> Result<(), JsValue> {
-	let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+fn mouse_move(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		if pressed.get() {
 			context.line_to(event.offset_x() as f64, event.offset_y() as f64);
 			context.stroke();
 			context.begin_path();
 			context.move_to(event.offset_x() as f64, event.offset_y() as f64);
 		}
-	}) as Box<dyn FnMut(_)>);
-
-	canvas.add_event_listener_with_callback("mousemove", closure.as_ref().unchecked_ref())?;
-	closure.forget();
-
-	Ok(())
+	}) as Box<dyn FnMut(_)>)
 }
 
-fn mouse_up(context: Rc<Context>, canvas: &Canvas, pressed: Rc<Cell<bool>>) -> Result<(), JsValue> {
-	let closure = Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
+fn mouse_up(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		pressed.set(false);
 		context.line_to(event.offset_x() as f64, event.offset_y() as f64);
 		context.stroke();
-	}) as Box<dyn FnMut(_)>);
-
-	canvas.add_event_listener_with_callback("mouseup", closure.as_ref().unchecked_ref())?;
-	closure.forget();
-
-	Ok(())
+	}) as Box<dyn FnMut(_)>)
 }

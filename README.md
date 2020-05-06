@@ -1,6 +1,6 @@
-# Wasm Paint
+# Wasm Game
 
-Copy of wasm-bindgen example.
+Copy of wasm-bindgen paint example.
 
 [View documentation for this example online][dox] or [View compiled example
 online][compiled]
