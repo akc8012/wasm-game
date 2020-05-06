@@ -1,0 +1,5 @@
+using web-sys instead of calling DOM / Canvas methods in JS?
+	https://users.rust-lang.org/t/what-is-a-reason-for-using-web-sys-except-for-team-has-no-javascript-skills/25032/6
+	"Once WebAssembly gains the ability to call these APIs directly, (“the host bindings proposal”), it will use that.
+	Which leads us to why you would use web-sys. For now, there’s not a super compelling reason. But in the future, it will be faster than calling out to JS. And, if you start using it now, you will just transparently get faster once wasm gains that capability."
+	"If we start by assumption that js is a perfect fit for in-browser orchestration&dom/APIs manipulations and wasm being perfect fit for CPU intensive operations / heavy calculus"
