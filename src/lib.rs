@@ -1,10 +1,12 @@
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 type Canvas = web_sys::HtmlCanvasElement;
 type Context = web_sys::CanvasRenderingContext2d;
+type MouseClosure = Closure<dyn FnMut(web_sys::MouseEvent)>;
 
 #[wasm_bindgen(start)]
 pub fn start() -> Result<(), JsValue> {
@@ -12,17 +14,15 @@ pub fn start() -> Result<(), JsValue> {
 	let context = Rc::new(create_context(&canvas)?);
 	let pressed = Rc::new(Cell::new(false));
 
-	let mouse_down = mouse_down(context.clone(), pressed.clone());
-	let mouse_move = mouse_move(context.clone(), pressed.clone());
-	let mouse_up = mouse_up(context.clone(), pressed.clone());
+	let mut mouse_events = HashMap::new();
+	mouse_events.insert("mousedown", mouse_down(context.clone(), pressed.clone()));
+	mouse_events.insert("mousemove", mouse_move(context.clone(), pressed.clone()));
+	mouse_events.insert("mouseup", mouse_up(context.clone(), pressed.clone()));
 
-	canvas.add_event_listener_with_callback("mousedown", mouse_down.as_ref().unchecked_ref())?;
-	canvas.add_event_listener_with_callback("mousemove", mouse_move.as_ref().unchecked_ref())?;
-	canvas.add_event_listener_with_callback("mouseup", mouse_up.as_ref().unchecked_ref())?;
-
-	mouse_down.forget();
-	mouse_move.forget();
-	mouse_up.forget();
+	for (name, closure) in mouse_events.into_iter() {
+		canvas.add_event_listener_with_callback(name, closure.as_ref().unchecked_ref())?;
+		closure.forget();
+	}
 
 	Ok(())
 }
@@ -44,7 +44,7 @@ fn create_context(canvas: &Canvas) -> Result<Context, JsValue> {
 	Ok(context)
 }
 
-fn mouse_down(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+fn mouse_down(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> MouseClosure {
 	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		context.begin_path();
 		context.move_to(event.offset_x() as f64, event.offset_y() as f64);
@@ -52,7 +52,7 @@ fn mouse_down(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMu
 	}) as Box<dyn FnMut(_)>)
 }
 
-fn mouse_move(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+fn mouse_move(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> MouseClosure {
 	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		if pressed.get() {
 			context.line_to(event.offset_x() as f64, event.offset_y() as f64);
@@ -63,7 +63,7 @@ fn mouse_move(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMu
 	}) as Box<dyn FnMut(_)>)
 }
 
-fn mouse_up(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> Closure<dyn FnMut(web_sys::MouseEvent)> {
+fn mouse_up(context: Rc<Context>, pressed: Rc<Cell<bool>>) -> MouseClosure {
 	Closure::wrap(Box::new(move |event: web_sys::MouseEvent| {
 		pressed.set(false);
 		context.line_to(event.offset_x() as f64, event.offset_y() as f64);
